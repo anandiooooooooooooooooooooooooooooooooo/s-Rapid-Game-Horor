@@ -4,11 +4,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ECHO_PROTOCOL // SYSTEM_ACCESS</title>
+  <title>ECHO_PROTOCOL // TERMINAL_ACCESS_V3</title>
   <style>
     /* --- ATMOSPHERE & VISUALS --- */
     :root {
       --term-color: #33ff00;
+      --dir-color: #55aaff;
+      --file-color: #cccccc;
       --bg-color: #050505;
       --glitch-color: #ff003c;
     }
@@ -22,23 +24,22 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
-      text-shadow: 0 0 5px var(--term-color);
+      text-shadow: 0 0 4px var(--term-color);
     }
 
-    /* CRT Screen Effect Overlay */
     #crt-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
       background-size: 100% 2px, 3px 100%;
       pointer-events: none;
       z-index: 10;
     }
 
-    /* Screen Flicker Animation */
     @keyframes flicker {
       0% {
         opacity: 0.97;
@@ -66,7 +67,7 @@
     }
 
     #terminal-container {
-      padding: 2rem;
+      padding: 1.5rem;
       flex-grow: 1;
       overflow-y: auto;
       animation: flicker 0.15s infinite;
@@ -78,20 +79,34 @@
     }
 
     .output-line {
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.3rem;
       white-space: pre-wrap;
-      line-height: 1.4;
+      line-height: 1.3;
     }
 
-    /* Input Area */
+    .dir {
+      color: var(--dir-color);
+      font-weight: bold;
+    }
+
+    .file {
+      color: var(--file-color);
+    }
+
+    .hidden {
+      display: none;
+    }
+
     #input-line {
       display: flex;
       align-items: center;
-      margin-top: 1rem;
+      margin-top: 0.5rem;
     }
 
     #prompt-symbol {
-      margin-right: 10px;
+      margin-right: 8px;
+      color: var(--term-color);
+      font-weight: bold;
     }
 
     #user-input {
@@ -102,10 +117,10 @@
       font-size: 1rem;
       flex-grow: 1;
       outline: none;
-      text-shadow: 0 0 5px var(--term-color);
+      text-shadow: 0 0 4px var(--term-color);
     }
 
-    /* Special Effects Classes */
+    /* Effects */
     .system-msg {
       color: #888;
       font-style: italic;
@@ -150,7 +165,7 @@
       }
     }
 
-    /* Jumpscare Overlay */
+    /* Jumpscare */
     #jumpscare-overlay {
       position: absolute;
       top: 0;
@@ -200,7 +215,6 @@
       text-shadow: 0 0 20px black;
     }
 
-    /* Start Button overlay */
     #start-overlay {
       position: absolute;
       top: 0;
@@ -219,9 +233,8 @@
 
 <body>
   <div id="crt-overlay"></div>
-
   <div id="start-overlay">
-    <h1>[ CLICK TO INITIALIZE SYSTEM ]</h1>
+    <h1>[ CLICK TO SYSTEM BOOT ]</h1>
   </div>
 
   <div id="jumpscare-overlay">
@@ -232,7 +245,7 @@
   <div id="terminal-container">
     <div id="output"></div>
     <div id="input-line" style="display:none;">
-      <span id="prompt-symbol">ADMIN@NODE-7:~$</span>
+      <span id="prompt-symbol">guest@NODE-7:~$</span>
       <input type="text" id="user-input" autocomplete="off" autofocus>
     </div>
   </div>
@@ -240,231 +253,323 @@
   <script>
     // --- AUDIO SYSTEM ---
     let audioCtx;
-    function initAudio() {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
+    function initAudio() { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function playSound(type) {
       if (!audioCtx) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
+      osc.connect(gain); gain.connect(audioCtx.destination);
       const t = audioCtx.currentTime;
-
       if (type === 'type') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(200 + Math.random() * 100, t);
-        gain.gain.setValueAtTime(0.05, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        osc.frequency.setValueAtTime(200 + Math.random() * 100, t); gain.gain.value = 0.05;
         osc.start(); osc.stop(t + 0.05);
       } else if (type === 'error') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, t);
-        osc.frequency.linearRampToValueAtTime(100, t + 0.3);
-        gain.gain.setValueAtTime(0.2, t);
-        gain.gain.linearRampToValueAtTime(0.001, t + 0.3);
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t);
+        osc.frequency.linearRampToValueAtTime(100, t + 0.3); gain.gain.value = 0.2;
         osc.start(); osc.stop(t + 0.3);
-      } else if (type === 'ambient') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(50, t);
-        gain.gain.setValueAtTime(0.02, t);
-        gain.gain.linearRampToValueAtTime(0.001, t + 2.0);
-        osc.start(); osc.stop(t + 2.0);
       } else if (type === 'scare') {
-        // High pitch screech + noise
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(800, t);
-        osc.frequency.exponentialRampToValueAtTime(100, t + 0.5);
-        gain.gain.setValueAtTime(0.5, t); // Louder
-        gain.gain.linearRampToValueAtTime(0.001, t + 0.5);
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, t);
+        osc.frequency.exponentialRampToValueAtTime(100, t + 0.5); gain.gain.value = 0.5;
         osc.start(); osc.stop(t + 0.5);
-      } else if (type === 'jumpscare_scream') {
-        // Very loud dissonance
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(100, t);
-        osc.frequency.linearRampToValueAtTime(1000, t + 0.1);
-        gain.gain.setValueAtTime(0.8, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
-        osc.start(); osc.stop(t + 1.5);
-
-        // Second oscillator for dissonance
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.type = 'square';
-        osc2.frequency.setValueAtTime(120, t);
-        osc2.frequency.linearRampToValueAtTime(850, t + 0.15);
-        gain2.gain.setValueAtTime(0.8, t);
-        gain2.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
-        osc2.start(); osc2.stop(t + 1.5);
+      } else if (type === 'ambient') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(50, t);
+        gain.gain.value = 0.02; gain.gain.linearRampToValueAtTime(0, t + 2);
+        osc.start(); osc.stop(t + 2);
       }
     }
 
-    // --- TERMINAL Logic ---
+    // --- FILE SYSTEM ---
+    let fs = {
+      "/": {
+        type: "dir", parent: null, children: {
+          "home": {
+            type: "dir", parent: "/", children: {
+              "guest": {
+                type: "dir", parent: "/home", children: {
+                  "readme.txt": { type: "file", content: "Use 'decrypt' to unlock secure files." },
+                  "notes.log": { type: "file", content: "Day 1: Connection unstable.\nDay 2: I hear voices in the server room." }
+                }
+              }
+            }
+          },
+          "var": {
+            type: "dir", parent: "/", children: {
+              "log": {
+                type: "dir", parent: "/var", children: {
+                  "syslog": { type: "file", content: "[ERROR] UNAUTHORIZED ENTITY DETECTED.\n[WARN] FIREWALL BREACHED." },
+                  "auth.log": { type: "file", content: "root login failed.\nguest login success.\nUNKNOWN login success." }
+                }
+              }
+            }
+          },
+          "bin": {
+            type: "dir", parent: "/", children: {
+              "echo": { type: "file", content: "[BINARY FILE]" },
+              "ls": { type: "file", content: "[BINARY FILE]" }
+            }
+          },
+          "secure": {
+            type: "dir", parent: "/", children: {
+              "ghost_data.enc": { type: "file", content: "ENCRYPTED DATA. RUN DECRYPTION." }
+            }
+          }
+        }
+      }
+    };
+
+    let currentPath = "/home/guest";
+    let currentUser = "guest";
+
+    // --- HELPER FUNCTIONS ---
+    function resolvePath(path) {
+      if (path === "/") return fs["/"];
+      if (path.startsWith("/")) {
+        // Absolute path
+        let parts = path.split("/").filter(p => p);
+        let node = fs["/"];
+        for (let p of parts) {
+          if (node.children && node.children[p]) node = node.children[p];
+          else return null;
+        }
+        return node;
+      } else {
+        // Relative path
+        let parts = path.split("/").filter(p => p);
+        let node = resolvePath(currentPath); // Start at current
+        for (let p of parts) {
+          if (p === "..") {
+            if (node.parent) node = resolvePath(node.parent); // Simple parent lookup simulation
+            // Real parent pointers would be better, but simplified for now:
+            // Let's re-calculate logical parent from string path
+            let cpParts = currentPath.split("/").filter(x => x);
+            cpParts.pop();
+            let newPath = "/" + cpParts.join("/");
+            // This is tricky with object ref. Let's just use string path manip + resolve for now.
+          } else if (p === ".") {
+            continue;
+          } else {
+            if (node.children && node.children[p]) node = node.children[p];
+            else return null;
+          }
+        }
+        return node;
+      }
+    }
+
+    // Simplified path resolution logic based on string path
+    function getDirObj(pathStr) {
+      let parts = pathStr.split("/").filter(p => p);
+      let node = fs["/"];
+      for (let p of parts) {
+        if (node.children && node.children[p]) node = node.children[p];
+        else return null;
+      }
+      return node;
+    }
+
+    function normalizePath(base, target) {
+      if (target.startsWith("/")) return target; // Absolute
+      let parts = base.split("/").filter(x => x);
+      let targetParts = target.split("/").filter(x => x);
+      for (let p of targetParts) {
+        if (p === "..") parts.pop();
+        else if (p !== ".") parts.push(p);
+      }
+      return "/" + parts.join("/");
+    }
+
+    // --- TERMINAL LOGIC ---
     const outputDiv = document.getElementById('output');
     const inputDiv = document.getElementById('input-line');
     const userInput = document.getElementById('user-input');
-    const startOverlay = document.getElementById('start-overlay');
-    const jsOverlay = document.getElementById('jumpscare-overlay');
+    const promptSpan = document.getElementById('prompt-symbol');
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-    let gameState = {
-      step: 0,
-      playerName: "Unknown",
-      files: {
-        "readme.txt": "Recover the logs from the Quarantine Zone. Do not trust the AI.",
-        "sys_log.txt": "[ERROR]: Unauthorized access detected. [ERROR]: It's watching.",
-        "encrypted_data.dat": "[ENCRYPTED] - Use 'decrypt' command."
-      },
-      decrypted: false
-    };
-
-    async function printLine(text, className = '', speed = 20) {
+    async function printLine(text, type = 'std', speed = 5) {
       const div = document.createElement('div');
-      div.className = `output-line ${className}`;
+      div.className = `output-line ${type === 'dir' ? 'dir' : type === 'file' ? 'file' : type}`;
       outputDiv.appendChild(div);
       const container = document.getElementById('terminal-container');
+
+      // Fast output for ls, slow for story
+      if (speed === 0) {
+        div.textContent = text;
+        container.scrollTop = container.scrollHeight;
+        return;
+      }
 
       for (let char of text) {
         div.textContent += char;
         container.scrollTop = container.scrollHeight;
-        if (char !== ' ') {
-          playSound('type');
-          await sleep(speed);
-        }
+        if (char !== ' ') await sleep(speed);
       }
-      await sleep(50);
     }
 
-    async function clearScreen() { outputDiv.innerHTML = ''; }
+    async function handleCommand(cmdRaw) {
+      const args = cmdRaw.trim().split(/\s+/);
+      const cmd = args[0].toLowerCase();
+      const arg1 = args[1];
 
-    // --- GAMEPLAY ---
-    async function handleInput(cmd) {
-      cmd = cmd.trim().toLowerCase();
-      const echo = document.createElement('div');
-      echo.textContent = `> ${cmd}`;
-      echo.style.opacity = 0.7;
-      outputDiv.appendChild(echo);
-      userInput.value = '';
+      // Echo command
+      const echoDiv = document.createElement('div');
+      echoDiv.textContent = `${promptSpan.textContent} ${cmdRaw}`;
+      echoDiv.style.opacity = 0.7;
+      outputDiv.appendChild(echoDiv);
       inputDiv.style.display = 'none';
 
-      // Global Commands
-      if (cmd === 'clear') { await clearScreen(); inputDiv.style.display = 'flex'; userInput.focus(); return; }
+      if (cmd === "") {
+        inputDiv.style.display = 'flex'; userInput.focus(); return;
+      }
 
-      // Step Logic
-      switch (gameState.step) {
-        case 0: // Name
-          if (cmd.length > 0) {
-            gameState.playerName = cmd;
-            gameState.step = 1;
-            await printLine(`User profile: [${gameState.playerName}]`, 'system-msg');
-            await sleep(500);
-            await printLine("Connecting to Node 7...", 'system-msg');
-            await sleep(1000);
-            await printLine("ACCESS GRANTED.", 'system-msg');
-            await printLine("Type 'help' for commands.");
+      if (cmd === "help") {
+        await printLine("Available commands:");
+        await printLine("- ls [dir]      List directory contents");
+        await printLine("- cd [dir]      Change directory");
+        await printLine("- cat [file]    Read file contents");
+        await printLine("- touch [file]  Create new file");
+        await printLine("- mkdir [dir]   Create new directory");
+        await printLine("- rm [file]     Remove file");
+        await printLine("- whoami        Display current user");
+        await printLine("- date          Display system date");
+        await printLine("- decrypt       Start decryption protocol");
+        await printLine("- clear         Clear terminal screen");
+      }
+      else if (cmd === "ls") {
+        let targetPath = arg1 ? normalizePath(currentPath, arg1) : currentPath;
+        let dirNode = getDirObj(targetPath);
+        if (dirNode && dirNode.type === "dir") {
+          let files = Object.keys(dirNode.children).join("  ");
+          if (files) await printLine(files, 'dir', 0);
+          else await printLine("(empty)", 'std', 0);
+        } else {
+          await printLine(`ls: cannot access '${arg1}': No such file or directory`, 'error-msg');
+        }
+      }
+      else if (cmd === "cd") {
+        if (!arg1) { currentPath = "/home/guest"; }
+        else {
+          let target = normalizePath(currentPath, arg1);
+          let dirNode = getDirObj(target);
+          if (dirNode && dirNode.type === "dir") {
+            currentPath = target;
           } else {
-            await printLine("Error: Name required.", 'error-msg');
-            playSound('error');
+            await printLine(`cd: ${arg1}: No such file or directory`, 'error-msg');
           }
-          break;
+        }
+        promptSpan.textContent = `${currentUser}@NODE-7:${currentPath}$`;
+      }
+      else if (cmd === "cat") {
+        if (!arg1) await printLine("usage: cat [file]");
+        else {
+          let target = normalizePath(currentPath, arg1);
+          // Handle filename in current dir logic
+          let dirPath = target.substring(0, target.lastIndexOf("/"));
+          let fileName = target.substring(target.lastIndexOf("/") + 1);
+          if (dirPath === "") dirPath = "/"; // Root case fix
 
-        case 1: // Main Loop
-          if (cmd === 'ls') {
-            await printLine("Directory listing:");
-            for (let f in gameState.files) await printLine("- " + f);
-          } else if (cmd.startsWith('open ')) {
-            const fname = cmd.split(' ')[1];
-            if (gameState.files[fname]) {
-              await printLine(`OPENING ${fname}...`);
-              await sleep(500);
-              await printLine(gameState.files[fname]);
-              if (fname === 'sys_log.txt') {
-                await printLine("WARNING: ANOMALY DETECTED.", 'error-msg');
-                gameState.step = 2; // AI wakes up
+          let dirNode = getDirObj(dirPath);
+          if (dirNode && dirNode.children[fileName]) {
+            let fileNode = dirNode.children[fileName];
+            if (fileNode.type === "file") {
+              await printLine(fileNode.content);
+              if (fileName === "syslog") {
+                await sleep(500);
+                await printLine("SYSTEM ALERT: INTRUSION DETECTED", "error-msg");
+                playSound('error');
               }
             } else {
-              await printLine("File not found.", 'error-msg');
+              await printLine(`cat: ${fileName}: Is a directory`, 'error-msg');
             }
-          } else if (cmd === 'decrypt') {
-            await printLine("Starting decryption sequence...", 'decrypt-msg');
-            await sleep(1000);
-            await printLine("DECRYPTION FAILED. KEY REQUIRED.", 'error-msg');
-            playSound('error');
-          } else if (cmd === 'help') {
-            await printLine("Commands: ls, open [file], decrypt, clear");
           } else {
-            await printLine("Unknown command.", 'error-msg');
+            await printLine(`cat: ${arg1}: No such file or directory`, 'error-msg');
           }
-          break;
-
-        case 2: // AI Interaction
-          await sleep(1000);
-          playSound('scare');
-          await printLine(`I SEE YOU, ${gameState.playerName.toUpperCase()}.`, 'entity-msg');
-          await sleep(1000);
-          await printLine("Why are you here? (leave/stay)", 'entity-msg');
-          gameState.step = 3;
-          break;
-
-        case 3:
-          if (cmd === 'leave') {
-            await printLine("YOU CANNOT LEAVE.", 'entity-msg');
-            await triggerJumpscare();
-            return;
-          } else if (cmd === 'stay') {
-            await printLine("THEN YOU WILL STAY FOREVER.", 'entity-msg');
-            await triggerJumpscare();
-            return;
+        }
+      }
+      else if (cmd === "touch") {
+        if (!arg1) await printLine("usage: touch [file]");
+        else {
+          let dirNode = getDirObj(currentPath);
+          if (dirNode) dirNode.children[arg1] = { type: "file", content: "" };
+        }
+      }
+      else if (cmd === "mkdir") {
+        if (!arg1) await printLine("usage: mkdir [dir]");
+        else {
+          let dirNode = getDirObj(currentPath);
+          if (dirNode) dirNode.children[arg1] = { type: "dir", children: {} };
+        }
+      }
+      else if (cmd === "rm") {
+        if (!arg1) await printLine("usage: rm [file]");
+        else {
+          let dirNode = getDirObj(currentPath);
+          if (dirNode && dirNode.children[arg1]) {
+            delete dirNode.children[arg1];
+            await printLine(`removed '${arg1}'`);
           } else {
-            await printLine("IRRELEVANT ANSWER.", 'entity-msg');
-            await triggerJumpscare();
-            return;
+            await printLine(`rm: cannot remove '${arg1}': No such file or directory`, 'error-msg');
           }
-          break;
+        }
+      }
+      else if (cmd === "whoami") {
+        await printLine(currentUser);
+      }
+      else if (cmd === "date") {
+        await printLine(new Date().toString());
+      }
+      else if (cmd === "clear") {
+        outputDiv.innerHTML = "";
+      }
+      else if (cmd === "decrypt") {
+        await printLine("Initiating decryption sequence...", "decrypt-msg");
+        await sleep(1000);
+        await printLine("ACCESS DENIED. ENTITY DETECTED.", "entity-msg");
+        playSound('scare');
+        await sleep(1000);
+        await printLine("I SEE YOU.", "entity-msg");
+        setTimeout(() => { triggerJumpscare(); }, 2000);
+        return;
+      }
+      else {
+        await printLine(`${cmd}: command not found`, 'error-msg');
       }
 
       inputDiv.style.display = 'flex';
-      userInput.focus();
+      userInput.focus(); userInput.value = "";
     }
 
-    async function triggerJumpscare() {
+    function triggerJumpscare() {
       inputDiv.style.display = 'none';
-      await sleep(500);
-      playSound('jumpscare_scream');
-      jsOverlay.style.display = 'flex'; // Show jumpscare
-
-      // Flash background red
+      const js = document.getElementById('jumpscare-overlay');
+      js.style.display = 'flex';
+      playSound('scare');
+      let t = 0;
       let interval = setInterval(() => {
-        jsOverlay.style.backgroundColor = jsOverlay.style.backgroundColor === 'red' ? 'black' : 'red';
+        js.style.backgroundColor = t % 2 === 0 ? 'red' : 'black';
+        t++;
       }, 50);
-
       setTimeout(() => {
         clearInterval(interval);
         document.body.innerHTML = '';
         document.body.style.backgroundColor = 'black';
-      }, 2500);
+      }, 3000);
     }
 
     // --- INIT ---
-    startOverlay.addEventListener('click', async () => {
-      startOverlay.style.display = 'none';
+    document.getElementById('start-overlay').addEventListener('click', () => {
+      document.getElementById('start-overlay').style.display = 'none';
       initAudio();
-      playSound('ambient');
-      await printLine("Initializing...", 'system-msg');
-      await sleep(500);
-      await clearScreen();
-      await printLine("UNJ-NET Remote Terminal v2.4");
-      await printLine("Enter Username:");
-      inputDiv.style.display = 'flex';
-      userInput.focus();
+      printLine("Booting Kernel...", "system-msg");
+      setTimeout(() => {
+        outputDiv.innerHTML = "";
+        printLine("Welcome to UNJ-NET v3.0");
+        printLine("Type 'help' for commands.");
+        inputDiv.style.display = 'flex'; userInput.focus();
+      }, 1500);
     });
 
     userInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleInput(userInput.value);
+      if (e.key === 'Enter') handleCommand(userInput.value);
     });
   </script>
 </body>
