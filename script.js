@@ -371,8 +371,8 @@ function JUMPSCARE() {
   iline.style.display = 'none';
   const jsDiv = document.getElementById('js');
   const jsImg = document.getElementById('jsimg');
-  // jsImg.src = 'https://wanderlustandlipstick.com/blogs/wanderlushdiary/files/2012/04/80545124.jpg';
-  jsImg.src = 'https://preview.redd.it/is-this-face-scary-enough-its-in-an-upcoming-video-for-my-v0-abfr2goik2ae1.jpeg?auto=webp&s=2cb8128eedf0444a482587d299913d2a2bbf0505';
+  jsImg.src = 'https://wanderlustandlipstick.com/blogs/wanderlushdiary/files/2012/04/80545124.jpg';
+  // jsImg.src = 'https://preview.redd.it/is-this-face-scary-enough-its-in-an-upcoming-video-for-my-v0-abfr2goik2ae1.jpeg?auto=webp&s=2cb8128eedf0444a482587d299913d2a2bbf0505';
   jsDiv.style.display = 'flex';
   SCREAM();
   document.body.style.overflow = 'hidden';
