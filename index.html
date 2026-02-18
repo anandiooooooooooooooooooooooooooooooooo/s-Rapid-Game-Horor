@@ -4,27 +4,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rapid Horror Game</title>
+  <title>ECHO_PROTOCOL // SYSTEM_FAILURE</title>
   <style>
-    /* --- ATMOSPHERE & VISUALS --- */
     :root {
       --term-color: #33ff00;
-      --dir-color: #55aaff;
-      --file-color: #cccccc;
-      --bg-color: #050505;
+      --bg-color: #000000;
       --glitch-color: #ff003c;
     }
 
     body {
       background-color: var(--bg-color);
       color: var(--term-color);
-      font-family: 'Courier New', Courier, monospace;
+      font-family: 'Courier New', monospace;
       margin: 0;
       overflow: hidden;
       height: 100vh;
       display: flex;
       flex-direction: column;
-      text-shadow: 0 0 4px var(--term-color);
+      text-shadow: 0 0 5px var(--term-color);
     }
 
     #crt-overlay {
@@ -61,16 +58,20 @@
         opacity: 0.99;
       }
 
+      50% {
+        opacity: 0.8;
+      }
+
       100% {
         opacity: 0.9;
       }
     }
 
     #terminal-container {
-      padding: 1.5rem;
+      padding: 2rem;
       flex-grow: 1;
       overflow-y: auto;
-      animation: flicker 0.15s infinite;
+      animation: flicker 0.1s infinite;
       max-width: 900px;
       margin: 0 auto;
       width: 100%;
@@ -79,34 +80,15 @@
     }
 
     .output-line {
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.5rem;
       white-space: pre-wrap;
-      line-height: 1.3;
-    }
-
-    .dir {
-      color: var(--dir-color);
-      font-weight: bold;
-    }
-
-    .file {
-      color: var(--file-color);
-    }
-
-    .hidden {
-      display: none;
+      line-height: 1.4;
     }
 
     #input-line {
       display: flex;
       align-items: center;
-      margin-top: 0.5rem;
-    }
-
-    #prompt-symbol {
-      margin-right: 8px;
-      color: var(--term-color);
-      font-weight: bold;
+      margin-top: 1rem;
     }
 
     #user-input {
@@ -117,55 +99,61 @@
       font-size: 1rem;
       flex-grow: 1;
       outline: none;
-      text-shadow: 0 0 4px var(--term-color);
+      text-shadow: 0 0 5px var(--term-color);
     }
 
-    /* Effects */
-    .system-msg {
-      color: #888;
-      font-style: italic;
-    }
-
+    /* Horror Effects */
     .error-msg {
-      color: #ff3333;
-      text-shadow: 0 0 5px red;
+      color: #ff0000;
+      text-shadow: 0 0 10px red;
       font-weight: bold;
     }
 
     .entity-msg {
       color: #ffffff;
-      text-shadow: 2px 2px #ff0000;
-      animation: shake 0.5s infinite;
+      text-shadow: 4px 0px #ff0000;
+      animation: shake 0.2s infinite;
     }
 
-    .decrypt-msg {
-      color: #00ffff;
-      text-shadow: 0 0 5px cyan;
+    .glitch-text {
+      animation: glitch 0.3s infinite;
+      color: magenta;
     }
 
     @keyframes shake {
       0% {
-        transform: translate(1px, 1px) rotate(0deg);
+        transform: translate(2px, 2px);
       }
 
-      10% {
-        transform: translate(-1px, -2px) rotate(-1deg);
+      25% {
+        transform: translate(-2px, -2px);
       }
 
-      20% {
-        transform: translate(-3px, 0px) rotate(1deg);
+      50% {
+        transform: translate(-2px, 2px);
       }
 
-      30% {
-        transform: translate(3px, 2px) rotate(0deg);
+      75% {
+        transform: translate(2px, -2px);
       }
 
       100% {
-        transform: translate(1px, -1px) rotate(0deg);
+        transform: translate(0, 0);
       }
     }
 
-    /* Jumpscare */
+    @keyframes glitch {
+      0% {
+        clip-path: inset(10% 0 80% 0);
+        transform: translateX(-5px);
+      }
+
+      100% {
+        clip-path: inset(80% 0 10% 0);
+        transform: translateX(5px);
+      }
+    }
+
     #jumpscare-overlay {
       position: absolute;
       top: 0;
@@ -178,41 +166,46 @@
       align-items: center;
       z-index: 100;
       flex-direction: column;
+      overflow: hidden;
     }
 
-    #jumpscare-face {
-      width: 80%;
-      height: 80%;
-      background: radial-gradient(circle, red 10%, black 70%);
-      border-radius: 50%;
-      animation: pulse-red 0.1s infinite;
-      box-shadow: 0 0 50px red;
+    #scary-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: contrast(200%) grayscale(100%) brightness(50%);
+      animation: pulse-red 0.05s infinite;
     }
 
     @keyframes pulse-red {
       0% {
-        transform: scale(1);
-        opacity: 1;
+        filter: contrast(200%) grayscale(100%) brightness(50%);
+        transform: scale(1.0);
       }
 
       50% {
+        filter: contrast(300%) grayscale(0%) brightness(150%) sepia(100%) hue-rotate(-50deg);
         transform: scale(1.1);
-        opacity: 0.8;
       }
 
       100% {
-        transform: scale(1);
-        opacity: 1;
+        filter: contrast(200%) grayscale(100%) brightness(50%);
+        transform: scale(1.0);
       }
     }
 
-    #jumpscare-text {
-      color: red;
-      font-size: 5rem;
-      font-weight: bold;
+    /* Flash Overlay */
+    #flash-overlay {
       position: absolute;
-      animation: shake 0.1s infinite;
-      text-shadow: 0 0 20px black;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+      transition: opacity 0.1s;
     }
 
     #start-overlay {
@@ -226,351 +219,209 @@
       justify-content: center;
       align-items: center;
       z-index: 20;
-      cursor: pointer;
+      curser: pointer;
+      color: red;
+      font-size: 2rem;
+      letter-spacing: 5px;
+      animation: flicker 2s infinite;
     }
   </style>
 </head>
 
 <body>
   <div id="crt-overlay"></div>
+  <div id="flash-overlay"></div>
+
   <div id="start-overlay">
-    <h1>[ CLICK TO SYSTEM BOOT ]</h1>
+    <h1>[ INITIALIZE ]</h1>
   </div>
 
   <div id="jumpscare-overlay">
-    <div id="jumpscare-face"></div>
-    <div id="jumpscare-text">I SEE YOU</div>
+    <img id="scary-img" src="" alt="">
   </div>
 
   <div id="terminal-container">
     <div id="output"></div>
     <div id="input-line" style="display:none;">
-      <span id="prompt-symbol">guest@NODE-7:~$</span>
+      <span id="prompt-symbol">ROOT@SYSTEM:~$</span>
       <input type="text" id="user-input" autocomplete="off" autofocus>
     </div>
   </div>
 
   <script>
-    // --- AUDIO SYSTEM ---
+    // --- AUDIO ---
     let audioCtx;
     function initAudio() { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    function playSound(type) {
+
+    function playTone(freq, type, dur, vol = 0.1) {
       if (!audioCtx) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain); gain.connect(audioCtx.destination);
       const t = audioCtx.currentTime;
-      if (type === 'type') {
-        osc.frequency.setValueAtTime(200 + Math.random() * 100, t); gain.gain.value = 0.05;
-        osc.start(); osc.stop(t + 0.05);
-      } else if (type === 'error') {
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t);
-        osc.frequency.linearRampToValueAtTime(100, t + 0.3); gain.gain.value = 0.2;
-        osc.start(); osc.stop(t + 0.3);
-      } else if (type === 'scare') {
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, t);
-        osc.frequency.exponentialRampToValueAtTime(100, t + 0.5); gain.gain.value = 0.5;
-        osc.start(); osc.stop(t + 0.5);
-      } else if (type === 'ambient') {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(50, t);
-        gain.gain.value = 0.02; gain.gain.linearRampToValueAtTime(0, t + 2);
-        osc.start(); osc.stop(t + 2);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      osc.start(); osc.stop(t + dur);
+    }
+
+    function scream() {
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+      // High pitch screech
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(800, t);
+      osc.frequency.linearRampToValueAtTime(100, t + 2); // Falling scream
+      gain.gain.setValueAtTime(0.8, t);
+      gain.gain.linearRampToValueAtTime(0, t + 2);
+      osc.start(); osc.stop(t + 2);
+
+      // White noise burst
+      const bufferSize = audioCtx.sampleRate * 2;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const nGain = audioCtx.createGain();
+      noise.connect(nGain); nGain.connect(audioCtx.destination);
+      nGain.gain.setValueAtTime(0.5, t);
+      nGain.gain.exponentialRampToValueAtTime(0.01, t + 1);
+      noise.start();
+    }
+
+    function heartbeat() {
+      playTone(60, 'sine', 0.1, 0.5);
+      setTimeout(() => playTone(50, 'sine', 0.1, 0.4), 150);
+    }
+
+    // --- TERMINAL ---
+    const out = document.getElementById('output');
+    const inp = document.getElementById('input-line');
+    const uInp = document.getElementById('user-input');
+    const flash = document.getElementById('flash-overlay');
+    const js = document.getElementById('jumpscare-overlay');
+    const img = document.getElementById('scary-img');
+
+    // FETCH SCARY IMAGE FROM INTERNET
+    const scaryImages = [
+      "https://loremflickr.com/g/1024/768/horror,nightmare/all",
+      "https://loremflickr.com/g/1024/768/scary,ghost/all",
+      "https://loremflickr.com/g/1024/768/skull/all"
+    ];
+    let imgIdx = 0;
+
+    async function print(txt, cls = '', speed = 15) {
+      const d = document.createElement('div');
+      d.className = `output-line ${cls}`;
+      out.appendChild(d);
+      const c = document.getElementById('terminal-container');
+
+      // Random glitch
+      if (Math.random() < 0.1) d.className += ' glitch-text';
+
+      for (let char of txt) {
+        d.textContent += char;
+        c.scrollTop = c.scrollHeight;
+        if (char !== ' ') {
+          playTone(200 + Math.random() * 200, 'square', 0.05, 0.05);
+          await new Promise(r => setTimeout(r, speed));
+        }
+      }
+      // Subliminal flash
+      if (Math.random() < 0.05) {
+        flash.style.opacity = 0.2;
+        setTimeout(() => flash.style.opacity = 0, 50);
       }
     }
 
-    // --- FILE SYSTEM ---
-    let fs = {
-      "/": {
-        type: "dir", parent: null, children: {
-          "home": {
-            type: "dir", parent: "/", children: {
-              "guest": {
-                type: "dir", parent: "/home", children: {
-                  "readme.txt": { type: "file", content: "Use 'decrypt' to unlock secure files." },
-                  "notes.log": { type: "file", content: "Day 1: Connection unstable.\nDay 2: I hear voices in the server room." }
-                }
-              }
-            }
-          },
-          "var": {
-            type: "dir", parent: "/", children: {
-              "log": {
-                type: "dir", parent: "/var", children: {
-                  "syslog": { type: "file", content: "[ERROR] UNAUTHORIZED ENTITY DETECTED.\n[WARN] FIREWALL BREACHED." },
-                  "auth.log": { type: "file", content: "root login failed.\nguest login success.\nUNKNOWN login success." }
-                }
-              }
-            }
-          },
-          "bin": {
-            type: "dir", parent: "/", children: {
-              "echo": { type: "file", content: "[BINARY FILE]" },
-              "ls": { type: "file", content: "[BINARY FILE]" }
-            }
-          },
-          "secure": {
-            type: "dir", parent: "/", children: {
-              "ghost_data.enc": { type: "file", content: "ENCRYPTED DATA. RUN DECRYPTION." }
-            }
-          }
-        }
-      }
-    };
+    async function cls() { out.innerHTML = ''; }
 
-    let currentPath = "/home/guest";
-    let currentUser = "guest";
-
-    // --- HELPER FUNCTIONS ---
-    function resolvePath(path) {
-      if (path === "/") return fs["/"];
-      if (path.startsWith("/")) {
-        // Absolute path
-        let parts = path.split("/").filter(p => p);
-        let node = fs["/"];
-        for (let p of parts) {
-          if (node.children && node.children[p]) node = node.children[p];
-          else return null;
-        }
-        return node;
-      } else {
-        // Relative path
-        let parts = path.split("/").filter(p => p);
-        let node = resolvePath(currentPath); // Start at current
-        for (let p of parts) {
-          if (p === "..") {
-            if (node.parent) node = resolvePath(node.parent); // Simple parent lookup simulation
-            // Real parent pointers would be better, but simplified for now:
-            // Let's re-calculate logical parent from string path
-            let cpParts = currentPath.split("/").filter(x => x);
-            cpParts.pop();
-            let newPath = "/" + cpParts.join("/");
-            // This is tricky with object ref. Let's just use string path manip + resolve for now.
-          } else if (p === ".") {
-            continue;
-          } else {
-            if (node.children && node.children[p]) node = node.children[p];
-            else return null;
-          }
-        }
-        return node;
-      }
-    }
-
-    // Simplified path resolution logic based on string path
-    function getDirObj(pathStr) {
-      let parts = pathStr.split("/").filter(p => p);
-      let node = fs["/"];
-      for (let p of parts) {
-        if (node.children && node.children[p]) node = node.children[p];
-        else return null;
-      }
-      return node;
-    }
-
-    function normalizePath(base, target) {
-      if (target.startsWith("/")) return target; // Absolute
-      let parts = base.split("/").filter(x => x);
-      let targetParts = target.split("/").filter(x => x);
-      for (let p of targetParts) {
-        if (p === "..") parts.pop();
-        else if (p !== ".") parts.push(p);
-      }
-      return "/" + parts.join("/");
-    }
-
-    // --- TERMINAL LOGIC ---
-    const outputDiv = document.getElementById('output');
-    const inputDiv = document.getElementById('input-line');
-    const userInput = document.getElementById('user-input');
-    const promptSpan = document.getElementById('prompt-symbol');
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-    async function printLine(text, type = 'std', speed = 5) {
-      const div = document.createElement('div');
-      div.className = `output-line ${type === 'dir' ? 'dir' : type === 'file' ? 'file' : type}`;
-      outputDiv.appendChild(div);
-      const container = document.getElementById('terminal-container');
-
-      // Fast output for ls, slow for story
-      if (speed === 0) {
-        div.textContent = text;
-        container.scrollTop = container.scrollHeight;
-        return;
-      }
-
-      for (let char of text) {
-        div.textContent += char;
-        container.scrollTop = container.scrollHeight;
-        if (char !== ' ') await sleep(speed);
-      }
-    }
-
-    async function handleCommand(cmdRaw) {
-      const args = cmdRaw.trim().split(/\s+/);
-      const cmd = args[0].toLowerCase();
-      const arg1 = args[1];
-
-      // Echo command
-      const echoDiv = document.createElement('div');
-      echoDiv.textContent = `${promptSpan.textContent} ${cmdRaw}`;
-      echoDiv.style.opacity = 0.7;
-      outputDiv.appendChild(echoDiv);
-      inputDiv.style.display = 'none';
-
-      if (cmd === "") {
-        inputDiv.style.display = 'flex'; userInput.focus(); return;
-      }
-
-      if (cmd === "help") {
-        await printLine("Available commands:");
-        await printLine("- ls [dir]      List directory contents");
-        await printLine("- cd [dir]      Change directory");
-        await printLine("- cat [file]    Read file contents");
-        await printLine("- touch [file]  Create new file");
-        await printLine("- mkdir [dir]   Create new directory");
-        await printLine("- rm [file]     Remove file");
-        await printLine("- whoami        Display current user");
-        await printLine("- date          Display system date");
-        await printLine("- decrypt       Start decryption protocol");
-        await printLine("- clear         Clear terminal screen");
-      }
-      else if (cmd === "ls") {
-        let targetPath = arg1 ? normalizePath(currentPath, arg1) : currentPath;
-        let dirNode = getDirObj(targetPath);
-        if (dirNode && dirNode.type === "dir") {
-          let files = Object.keys(dirNode.children).join("  ");
-          if (files) await printLine(files, 'dir', 0);
-          else await printLine("(empty)", 'std', 0);
-        } else {
-          await printLine(`ls: cannot access '${arg1}': No such file or directory`, 'error-msg');
-        }
-      }
-      else if (cmd === "cd") {
-        if (!arg1) { currentPath = "/home/guest"; }
-        else {
-          let target = normalizePath(currentPath, arg1);
-          let dirNode = getDirObj(target);
-          if (dirNode && dirNode.type === "dir") {
-            currentPath = target;
-          } else {
-            await printLine(`cd: ${arg1}: No such file or directory`, 'error-msg');
-          }
-        }
-        promptSpan.textContent = `${currentUser}@NODE-7:${currentPath}$`;
-      }
-      else if (cmd === "cat") {
-        if (!arg1) await printLine("usage: cat [file]");
-        else {
-          let target = normalizePath(currentPath, arg1);
-          // Handle filename in current dir logic
-          let dirPath = target.substring(0, target.lastIndexOf("/"));
-          let fileName = target.substring(target.lastIndexOf("/") + 1);
-          if (dirPath === "") dirPath = "/"; // Root case fix
-
-          let dirNode = getDirObj(dirPath);
-          if (dirNode && dirNode.children[fileName]) {
-            let fileNode = dirNode.children[fileName];
-            if (fileNode.type === "file") {
-              await printLine(fileNode.content);
-              if (fileName === "syslog") {
-                await sleep(500);
-                await printLine("SYSTEM ALERT: INTRUSION DETECTED", "error-msg");
-                playSound('error');
-              }
-            } else {
-              await printLine(`cat: ${fileName}: Is a directory`, 'error-msg');
-            }
-          } else {
-            await printLine(`cat: ${arg1}: No such file or directory`, 'error-msg');
-          }
-        }
-      }
-      else if (cmd === "touch") {
-        if (!arg1) await printLine("usage: touch [file]");
-        else {
-          let dirNode = getDirObj(currentPath);
-          if (dirNode) dirNode.children[arg1] = { type: "file", content: "" };
-        }
-      }
-      else if (cmd === "mkdir") {
-        if (!arg1) await printLine("usage: mkdir [dir]");
-        else {
-          let dirNode = getDirObj(currentPath);
-          if (dirNode) dirNode.children[arg1] = { type: "dir", children: {} };
-        }
-      }
-      else if (cmd === "rm") {
-        if (!arg1) await printLine("usage: rm [file]");
-        else {
-          let dirNode = getDirObj(currentPath);
-          if (dirNode && dirNode.children[arg1]) {
-            delete dirNode.children[arg1];
-            await printLine(`removed '${arg1}'`);
-          } else {
-            await printLine(`rm: cannot remove '${arg1}': No such file or directory`, 'error-msg');
-          }
-        }
-      }
-      else if (cmd === "whoami") {
-        await printLine(currentUser);
-      }
-      else if (cmd === "date") {
-        await printLine(new Date().toString());
-      }
-      else if (cmd === "clear") {
-        outputDiv.innerHTML = "";
-      }
-      else if (cmd === "decrypt") {
-        await printLine("Initiating decryption sequence...", "decrypt-msg");
-        await sleep(1000);
-        await printLine("ACCESS DENIED. ENTITY DETECTED.", "entity-msg");
-        playSound('scare');
-        await sleep(1000);
-        await printLine("I SEE YOU.", "entity-msg");
-        setTimeout(() => { triggerJumpscare(); }, 2000);
-        return;
-      }
-      else {
-        await printLine(`${cmd}: command not found`, 'error-msg');
-      }
-
-      inputDiv.style.display = 'flex';
-      userInput.focus(); userInput.value = "";
-    }
-
-    function triggerJumpscare() {
-      inputDiv.style.display = 'none';
-      const js = document.getElementById('jumpscare-overlay');
-      js.style.display = 'flex';
-      playSound('scare');
-      let t = 0;
-      let interval = setInterval(() => {
-        js.style.backgroundColor = t % 2 === 0 ? 'red' : 'black';
-        t++;
-      }, 50);
-      setTimeout(() => {
-        clearInterval(interval);
-        document.body.innerHTML = '';
-        document.body.style.backgroundColor = 'black';
-      }, 3000);
-    }
-
-    // --- INIT ---
-    document.getElementById('start-overlay').addEventListener('click', () => {
+    // --- GAME LOOP ---
+    document.getElementById('start-overlay').addEventListener('click', async () => {
       document.getElementById('start-overlay').style.display = 'none';
       initAudio();
-      printLine("Booting Kernel...", "system-msg");
-      setTimeout(() => {
-        outputDiv.innerHTML = "";
-        printLine("Welcome to UNJ-NET v3.0");
-        printLine("Type 'help' for commands.");
-        inputDiv.style.display = 'flex'; userInput.focus();
-      }, 1500);
+
+      // Heartbeat loop
+      setInterval(() => {
+        if (Math.random() > 0.7) heartbeat();
+      }, 2000);
+
+      await print("BIOS CHECK...", "system-msg", 20);
+      await new Promise(r => setTimeout(r, 500));
+      await print("LOADING KERNEL...", "system-msg", 10);
+      await cls();
+      await print("ECHO_PROTOCOL v6.6.6 initialized.");
+      await print("WARNING: SECURITY COMPROMISED.", "error-msg");
+      await print("Connection established with external entity.");
+      await print("Who are you?");
+      inp.style.display = 'flex'; uInp.focus();
     });
 
-    userInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleCommand(userInput.value);
+    uInp.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        const cmd = uInp.value.trim().toLowerCase();
+        uInp.value = ''; inp.style.display = 'none';
+
+        const echo = document.createElement('div');
+        echo.textContent = `> ${cmd}`;
+        echo.style.opacity = 0.5; out.appendChild(echo);
+
+        await new Promise(r => setTimeout(r, 500));
+
+        if (cmd === "help") {
+          await print("NO HELP AVAILABLE.", "error-msg");
+        }
+        else if (cmd === "die" || cmd === "run" || cmd === "stop") {
+          await print("CANNOT STOP.", "entity-msg");
+          triggerJumpscare();
+          return;
+        }
+        else {
+          await print("I HEAR YOU BREATHING.", "entity-msg");
+          await new Promise(r => setTimeout(r, 1000));
+          if (Math.random() > 0.5) {
+            print("LOOK BEHIND YOU.", "entity-msg");
+            setTimeout(triggerJumpscare, 2000);
+            return;
+          } else {
+            await print("The camera is on.", "system-msg");
+            inp.style.display = 'flex'; uInp.focus();
+          }
+        }
+
+        inp.style.display = 'flex'; uInp.focus();
+      }
     });
+
+    function triggerJumpscare() {
+      inp.style.display = 'none';
+      // Pick random scary image
+      img.src = scaryImages[Math.floor(Math.random() * scaryImages.length)] + "?random=" + Math.random();
+
+      js.style.display = 'flex';
+      scream();
+
+      // Intense flashing
+      let t = 0;
+      let i = setInterval(() => {
+        js.style.backgroundColor = t % 2 === 0 ? 'red' : 'white';
+        // Randomly offset image
+        img.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) scale(1.2)`;
+        t++;
+      }, 50);
+
+      setTimeout(() => {
+        clearInterval(i);
+        document.body.innerHTML = '';
+        document.body.style.backgroundColor = 'black';
+        setTimeout(() => location.reload(), 2000); // Reset
+      }, 3000);
+    }
   </script>
 </body>
 
