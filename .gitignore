@@ -2,5 +2,9 @@
 *
 # But not .html files
 !*.html
+# And not .js files
+!*.js
+# And not .css files
+!*.css
 # And not .gitignore itself
 !.gitignore
