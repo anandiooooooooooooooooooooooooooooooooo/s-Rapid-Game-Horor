@@ -1,2 +1,6 @@
-.vercel
-.py
+# Ignore everything
+*
+# But not .html files
+!*.html
+# And not .gitignore itself
+!.gitignore
