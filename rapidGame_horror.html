@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECHO_PROTOCOL // SYSTEM_ACCESS</title>
+  <style>
+    /* --- ATMOSPHERE & VISUALS --- */
+    :root {
+      --term-color: #33ff00;
+      --bg-color: #050505;
+      --glitch-color: #ff003c;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--term-color);
+      font-family: 'Courier New', Courier, monospace;
+      margin: 0;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      text-shadow: 0 0 5px var(--term-color);
+    }
+
+    /* CRT Screen Effect Overlay */
+    #crt-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background-size: 100% 2px, 3px 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Screen Flicker Animation */
+    @keyframes flicker {
+      0% {
+        opacity: 0.97;
+      }
+
+      5% {
+        opacity: 0.95;
+      }
+
+      10% {
+        opacity: 0.9;
+      }
+
+      15% {
+        opacity: 0.95;
+      }
+
+      20% {
+        opacity: 0.99;
+      }
+
+      100% {
+        opacity: 0.9;
+      }
+    }
+
+    #terminal-container {
+      padding: 2rem;
+      flex-grow: 1;
+      overflow-y: auto;
+      animation: flicker 0.15s infinite;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
+      z-index: 5;
+    }
+
+    .output-line {
+      margin-bottom: 0.5rem;
+      white-space: pre-wrap;
+      line-height: 1.4;
+    }
+
+    /* Input Area */
+    #input-line {
+      display: flex;
+      align-items: center;
+      margin-top: 1rem;
+    }
+
+    #prompt-symbol {
+      margin-right: 10px;
+    }
+
+    #user-input {
+      background: transparent;
+      border: none;
+      color: var(--term-color);
+      font-family: inherit;
+      font-size: 1rem;
+      flex-grow: 1;
+      outline: none;
+      text-shadow: 0 0 5px var(--term-color);
+    }
+
+    /* Special Effects Classes */
+    .system-msg {
+      color: #888;
+      font-style: italic;
+    }
+
+    .error-msg {
+      color: #ff3333;
+      text-shadow: 0 0 5px red;
+      font-weight: bold;
+    }
+
+    .entity-msg {
+      color: #ffffff;
+      text-shadow: 2px 2px #ff0000;
+      animation: shake 0.5s infinite;
+    }
+
+    .decrypt-msg {
+      color: #00ffff;
+      text-shadow: 0 0 5px cyan;
+    }
+
+    @keyframes shake {
+      0% {
+        transform: translate(1px, 1px) rotate(0deg);
+      }
+
+      10% {
+        transform: translate(-1px, -2px) rotate(-1deg);
+      }
+
+      20% {
+        transform: translate(-3px, 0px) rotate(1deg);
+      }
+
+      30% {
+        transform: translate(3px, 2px) rotate(0deg);
+      }
+
+      100% {
+        transform: translate(1px, -1px) rotate(0deg);
+      }
+    }
+
+    /* Jumpscare Overlay */
+    #jumpscare-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      flex-direction: column;
+    }
+
+    #jumpscare-face {
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(circle, red 10%, black 70%);
+      border-radius: 50%;
+      animation: pulse-red 0.1s infinite;
+      box-shadow: 0 0 50px red;
+    }
+
+    @keyframes pulse-red {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    #jumpscare-text {
+      color: red;
+      font-size: 5rem;
+      font-weight: bold;
+      position: absolute;
+      animation: shake 0.1s infinite;
+      text-shadow: 0 0 20px black;
+    }
+
+    /* Start Button overlay */
+    #start-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="crt-overlay"></div>
+
+  <div id="start-overlay">
+    <h1>[ CLICK TO INITIALIZE SYSTEM ]</h1>
+  </div>
+
+  <div id="jumpscare-overlay">
+    <div id="jumpscare-face"></div>
+    <div id="jumpscare-text">I SEE YOU</div>
+  </div>
+
+  <div id="terminal-container">
+    <div id="output"></div>
+    <div id="input-line" style="display:none;">
+      <span id="prompt-symbol">ADMIN@NODE-7:~$</span>
+      <input type="text" id="user-input" autocomplete="off" autofocus>
+    </div>
+  </div>
+
+  <script>
+    // --- AUDIO SYSTEM ---
+    let audioCtx;
+    function initAudio() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function playSound(type) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const t = audioCtx.currentTime;
+
+      if (type === 'type') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(200 + Math.random() * 100, t);
+        gain.gain.setValueAtTime(0.05, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        osc.start(); osc.stop(t + 0.05);
+      } else if (type === 'error') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, t);
+        osc.frequency.linearRampToValueAtTime(100, t + 0.3);
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.linearRampToValueAtTime(0.001, t + 0.3);
+        osc.start(); osc.stop(t + 0.3);
+      } else if (type === 'ambient') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(50, t);
+        gain.gain.setValueAtTime(0.02, t);
+        gain.gain.linearRampToValueAtTime(0.001, t + 2.0);
+        osc.start(); osc.stop(t + 2.0);
+      } else if (type === 'scare') {
+        // High pitch screech + noise
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(800, t);
+        osc.frequency.exponentialRampToValueAtTime(100, t + 0.5);
+        gain.gain.setValueAtTime(0.5, t); // Louder
+        gain.gain.linearRampToValueAtTime(0.001, t + 0.5);
+        osc.start(); osc.stop(t + 0.5);
+      } else if (type === 'jumpscare_scream') {
+        // Very loud dissonance
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, t);
+        osc.frequency.linearRampToValueAtTime(1000, t + 0.1);
+        gain.gain.setValueAtTime(0.8, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+        osc.start(); osc.stop(t + 1.5);
+
+        // Second oscillator for dissonance
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(120, t);
+        osc2.frequency.linearRampToValueAtTime(850, t + 0.15);
+        gain2.gain.setValueAtTime(0.8, t);
+        gain2.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+        osc2.start(); osc2.stop(t + 1.5);
+      }
+    }
+
+    // --- TERMINAL Logic ---
+    const outputDiv = document.getElementById('output');
+    const inputDiv = document.getElementById('input-line');
+    const userInput = document.getElementById('user-input');
+    const startOverlay = document.getElementById('start-overlay');
+    const jsOverlay = document.getElementById('jumpscare-overlay');
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    let gameState = {
+      step: 0,
+      playerName: "Unknown",
+      files: {
+        "readme.txt": "Recover the logs from the Quarantine Zone. Do not trust the AI.",
+        "sys_log.txt": "[ERROR]: Unauthorized access detected. [ERROR]: It's watching.",
+        "encrypted_data.dat": "[ENCRYPTED] - Use 'decrypt' command."
+      },
+      decrypted: false
+    };
+
+    async function printLine(text, className = '', speed = 20) {
+      const div = document.createElement('div');
+      div.className = `output-line ${className}`;
+      outputDiv.appendChild(div);
+      const container = document.getElementById('terminal-container');
+
+      for (let char of text) {
+        div.textContent += char;
+        container.scrollTop = container.scrollHeight;
+        if (char !== ' ') {
+          playSound('type');
+          await sleep(speed);
+        }
+      }
+      await sleep(50);
+    }
+
+    async function clearScreen() { outputDiv.innerHTML = ''; }
+
+    // --- GAMEPLAY ---
+    async function handleInput(cmd) {
+      cmd = cmd.trim().toLowerCase();
+      const echo = document.createElement('div');
+      echo.textContent = `> ${cmd}`;
+      echo.style.opacity = 0.7;
+      outputDiv.appendChild(echo);
+      userInput.value = '';
+      inputDiv.style.display = 'none';
+
+      // Global Commands
+      if (cmd === 'clear') { await clearScreen(); inputDiv.style.display = 'flex'; userInput.focus(); return; }
+
+      // Step Logic
+      switch (gameState.step) {
+        case 0: // Name
+          if (cmd.length > 0) {
+            gameState.playerName = cmd;
+            gameState.step = 1;
+            await printLine(`User profile: [${gameState.playerName}]`, 'system-msg');
+            await sleep(500);
+            await printLine("Connecting to Node 7...", 'system-msg');
+            await sleep(1000);
+            await printLine("ACCESS GRANTED.", 'system-msg');
+            await printLine("Type 'help' for commands.");
+          } else {
+            await printLine("Error: Name required.", 'error-msg');
+            playSound('error');
+          }
+          break;
+
+        case 1: // Main Loop
+          if (cmd === 'ls') {
+            await printLine("Directory listing:");
+            for (let f in gameState.files) await printLine("- " + f);
+          } else if (cmd.startsWith('open ')) {
+            const fname = cmd.split(' ')[1];
+            if (gameState.files[fname]) {
+              await printLine(`OPENING ${fname}...`);
+              await sleep(500);
+              await printLine(gameState.files[fname]);
+              if (fname === 'sys_log.txt') {
+                await printLine("WARNING: ANOMALY DETECTED.", 'error-msg');
+                gameState.step = 2; // AI wakes up
+              }
+            } else {
+              await printLine("File not found.", 'error-msg');
+            }
+          } else if (cmd === 'decrypt') {
+            await printLine("Starting decryption sequence...", 'decrypt-msg');
+            await sleep(1000);
+            await printLine("DECRYPTION FAILED. KEY REQUIRED.", 'error-msg');
+            playSound('error');
+          } else if (cmd === 'help') {
+            await printLine("Commands: ls, open [file], decrypt, clear");
+          } else {
+            await printLine("Unknown command.", 'error-msg');
+          }
+          break;
+
+        case 2: // AI Interaction
+          await sleep(1000);
+          playSound('scare');
+          await printLine(`I SEE YOU, ${gameState.playerName.toUpperCase()}.`, 'entity-msg');
+          await sleep(1000);
+          await printLine("Why are you here? (leave/stay)", 'entity-msg');
+          gameState.step = 3;
+          break;
+
+        case 3:
+          if (cmd === 'leave') {
+            await printLine("YOU CANNOT LEAVE.", 'entity-msg');
+            await triggerJumpscare();
+            return;
+          } else if (cmd === 'stay') {
+            await printLine("THEN YOU WILL STAY FOREVER.", 'entity-msg');
+            await triggerJumpscare();
+            return;
+          } else {
+            await printLine("IRRELEVANT ANSWER.", 'entity-msg');
+            await triggerJumpscare();
+            return;
+          }
+          break;
+      }
+
+      inputDiv.style.display = 'flex';
+      userInput.focus();
+    }
+
+    async function triggerJumpscare() {
+      inputDiv.style.display = 'none';
+      await sleep(500);
+      playSound('jumpscare_scream');
+      jsOverlay.style.display = 'flex'; // Show jumpscare
+
+      // Flash background red
+      let interval = setInterval(() => {
+        jsOverlay.style.backgroundColor = jsOverlay.style.backgroundColor === 'red' ? 'black' : 'red';
+      }, 50);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        document.body.innerHTML = '';
+        document.body.style.backgroundColor = 'black';
+      }, 2500);
+    }
+
+    // --- INIT ---
+    startOverlay.addEventListener('click', async () => {
+      startOverlay.style.display = 'none';
+      initAudio();
+      playSound('ambient');
+      await printLine("Initializing...", 'system-msg');
+      await sleep(500);
+      await clearScreen();
+      await printLine("UNJ-NET Remote Terminal v2.4");
+      await printLine("Enter Username:");
+      inputDiv.style.display = 'flex';
+      userInput.focus();
+    });
+
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleInput(userInput.value);
+    });
+  </script>
+</body>
+
+</html>
